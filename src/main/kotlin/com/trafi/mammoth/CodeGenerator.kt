@@ -69,11 +69,11 @@ object CodeGenerator {
                     .build()
             })
             .addStatement(
-                "return %T(name = %S, parameters = %L)",
+                "return %T(\nname = %S,\nparameters = %L)",
                 rawEvent,
                 event.publishName,
                 CodeBlock.of(
-                    "mapOf(%L)",
+                    "mapOf(\n%L)",
                     event.publishValues.map {
                         CodeBlock.of(
                             "%S to %S",
@@ -92,7 +92,7 @@ object CodeGenerator {
                             schemaVersionPublishName,
                             schemaVersion
                         )
-                    ).joinToCode()
+                    ).joinToCode(separator = ",\n")
                 )
             )
             .build()
