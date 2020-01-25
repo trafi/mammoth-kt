@@ -60,9 +60,13 @@ object CodeGenerator {
 
     private fun generateEventFunction(event: Schema.Event): FunSpec {
         return FunSpec.builder(event.nativeFunctionName)
+            .addKdoc(event.description)
             .returns(rawEvent)
             .addParameters(event.parameters.map {
-                ParameterSpec.builder(it.nativeParameterName, it.nativeTypeName).build()
+                ParameterSpec
+                    .builder(it.nativeParameterName, it.nativeTypeName)
+                    .addKdoc(it.description)
+                    .build()
             })
             .addStatement(
                 "return %T(name = %S, parameters = %L)",
