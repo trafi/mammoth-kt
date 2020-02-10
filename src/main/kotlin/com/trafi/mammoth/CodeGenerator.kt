@@ -106,6 +106,7 @@ private val Schema.Event.Parameter.nativeTypeName: TypeName
     get() = when (typeName) {
         "String" -> String::class.asTypeName()
         "Integer" -> Int::class.asTypeName()
+        "Boolean" -> Boolean::class.asTypeName()
         else -> ClassName(packageName, typeName)
     }
 
@@ -121,7 +122,7 @@ private val Schema.Event.publishValues: List<Pair<String, String>>
     get() = values.map { it.parameter.publishName to it.publishValue }
 
 private val Schema.Event.Value.publishValue: String
-    get() = stringValue ?: integerValue?.toString() ?: stringEnumValue
+    get() = stringValue ?: integerValue?.toString() ?: stringEnumValue ?: booleanValue?.toString()
     ?: throw IllegalArgumentException("Invalid publish parameter value. Parameter: ${parameter.name}")
 
 private val Schema.Event.publishParameterExpressions: List<Pair<String, String>>
@@ -130,7 +131,7 @@ private val Schema.Event.publishParameterExpressions: List<Pair<String, String>>
 private val Schema.Event.Parameter.nativeParameterExpression: String
     get() = when (typeName) {
         "String" -> nativeParameterName
-        "Integer" -> "\$$nativeParameterName"
+        "Integer", "Boolean" -> "$nativeParameterName.toString()"
         else -> "$nativeParameterName.$enumValuePropertyName"
     }
 

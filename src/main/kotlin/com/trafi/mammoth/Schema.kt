@@ -26,7 +26,8 @@ class Schema(
             val parameter: Parameter,
             val stringValue: String?,
             val integerValue: Int?,
-            val stringEnumValue: String?
+            val stringEnumValue: String?,
+            val booleanValue: Boolean?
         )
 
         @Serializable
