@@ -18,7 +18,7 @@ class Schema(
         val parameters: List<Parameter>
     ) {
         companion object {
-            const val eventTypeIdentifier = "EventType"
+            const val eventTypeIdentifier = "event_type"
         }
 
         @Serializable
