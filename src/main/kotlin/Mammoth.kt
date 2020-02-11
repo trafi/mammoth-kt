@@ -1,0 +1,56 @@
+import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.option
+import com.trafi.mammoth.CodeGenerator
+import com.trafi.mammoth.Schema
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.io.File
+import java.io.FileWriter
+import java.io.IOException
+
+class Mammoth : CliktCommand() {
+
+    private val project: String by option(help = "Mammoth project id").default("whitelabel")
+    private val version: String by option(help = "Mammoth schema version").default("")
+    private val outputPath: String by option(help = "Generated schema code output path").default("")
+    private val outputFileName: String by option(help = "Generated schema code output file name").default("MammothEvents.kt")
+
+    override fun run() {
+        try {
+            val url = "https://mammoth.trafi.com/$project/schema/$version"
+            echo("Downloading schema from $url")
+            OkHttpClient().newCall(
+                Request.Builder()
+                    .url(url)
+                    .build()
+            ).execute().use { response ->
+                if (response.code != 200) {
+                    throw IOException("${response.code} ${response.message}\n${response.body?.string().orEmpty()}")
+                }
+
+                val schemaJsonString =
+                    response.body?.string() ?: throw IOException("${response.code} ${response.message} with empty body")
+
+                echo("Parsing schema")
+                val json = Json(JsonConfiguration.Stable)
+                val schema = json.parse(Schema.serializer(), schemaJsonString)
+
+                echo("Generating code")
+                val code = CodeGenerator.generateCode(schema)
+
+                val file = File(outputPath).resolve(outputFileName)
+                echo("Writing generated code to $file")
+                FileWriter(file).use { it.write(code) }
+
+                echo("Success")
+            }
+        } catch (e: Exception) {
+            echo("Error: $e")
+        }
+    }
+}
+
+fun main(args: Array<String>) = Mammoth().main(args)
