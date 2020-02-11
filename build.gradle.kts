@@ -2,10 +2,11 @@ plugins {
     val kotlinVersion = "1.3.61"
     kotlin("jvm") version kotlinVersion
     id("org.jetbrains.kotlin.plugin.serialization") version kotlinVersion
+    id("com.github.johnrengelman.shadow") version "5.2.0"
 }
 
 group = "com.trafi"
-version = "1.0-SNAPSHOT"
+version = "1.0"
 
 repositories {
     mavenCentral()
@@ -32,5 +33,13 @@ tasks {
     }
     test {
         useJUnitPlatform()
+    }
+    jar {
+        manifest {
+            attributes["Main-Class"] = "MammothKt"
+        }
+    }
+    shadowJar {
+        archiveClassifier.set("")
     }
 }
