@@ -35,7 +35,7 @@ object CodeGenerator {
 
     private fun generateType(type: Schema.Type): TypeSpec? {
         return type.stringEnum?.let { stringEnum ->
-            TypeSpec.enumBuilder(type.name)
+            TypeSpec.enumBuilder(type.nativeTypeName)
                 .primaryConstructor(
                     FunSpec.constructorBuilder()
                         .addParameter(enumValuePropertyName, String::class)
@@ -99,15 +99,16 @@ object CodeGenerator {
     }
 }
 
-private val Schema.Event.nativeFunctionName: String get() = name.normalized
-private val Schema.Event.Parameter.nativeParameterName: String get() = name.normalized
+private val Schema.Event.nativeFunctionName: String get() = name.normalized.decapitalize()
+private val Schema.Event.Parameter.nativeParameterName: String get() = name.normalized.decapitalize()
+private val Schema.Type.nativeTypeName: String get() = name.normalized
 
 private val Schema.Event.Parameter.nativeTypeName: TypeName
     get() = when (typeName) {
         "String" -> String::class.asTypeName()
         "Integer" -> Int::class.asTypeName()
         "Boolean" -> Boolean::class.asTypeName()
-        else -> ClassName(packageName, typeName)
+        else -> ClassName(packageName, typeName.normalized)
     }
 
 private val Schema.Event.publishName: String
@@ -135,8 +136,7 @@ private val Schema.Event.Parameter.nativeParameterExpression: String
         else -> "$nativeParameterName.$enumValuePropertyName"
     }
 
-// remove whitespace, convert snake_case to camelCase
+// remove whitespace, convert snake_case to CamelCase
 private val String.normalized: String
     get() = replace(" ", "")
         .split("_").joinToString(separator = "") { it.capitalize() }
-        .decapitalize()
