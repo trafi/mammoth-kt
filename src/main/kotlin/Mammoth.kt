@@ -21,7 +21,7 @@ class Mammoth : CliktCommand() {
     override fun run() {
         try {
             val url = "https://mammoth.trafi.com/$project/schema/$version"
-            echo("Downloading schema from $url")
+            echo(if (business) "Downloading schema from $url" else "Hunting for mammoths at $url")
             OkHttpClient().newCall(
                 Request.Builder()
                     .url(url)
@@ -34,23 +34,28 @@ class Mammoth : CliktCommand() {
                 val schemaJsonString =
                     response.body?.string() ?: throw IOException("${response.code} ${response.message} with empty body")
 
-                echo("Parsing schema")
+                echo(if (business) "Parsing schema" else "Grooming mammoth")
                 val json = Json(JsonConfiguration.Stable)
                 val schema = json.parse(Schema.serializer(), schemaJsonString)
 
-                echo("Generating code")
+                echo(if (business) "Generating code" else "Cooking kotlet")
                 val code = CodeGenerator.generateCode(schema)
 
                 val file = File(outputPath).resolve(outputFileName)
-                echo("Writing generated code to $file")
+                echo(if (business) "Writing generated code to $file" else "Serving hot kotlet at $file")
                 FileWriter(file).use { it.write(code) }
 
-                echo("Success")
+                echo(if (business) "Success" else "Victory")
             }
         } catch (e: Exception) {
-            echo("Error: $e")
+            echo(if (business) "Error: $e" else "Oops, something went wrong: $e")
         }
     }
 }
 
 fun main(args: Array<String>) = Mammoth().main(args)
+
+/**
+ * Real business or just casual.
+ */
+private val business get() = Math.random() < 0.9
