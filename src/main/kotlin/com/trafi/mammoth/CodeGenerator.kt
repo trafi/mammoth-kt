@@ -99,8 +99,8 @@ object CodeGenerator {
     }
 }
 
-private val Schema.Event.nativeFunctionName: String get() = name.normalized.decapitalized
-private val Schema.Event.Parameter.nativeParameterName: String get() = name.normalized.decapitalized
+private val Schema.Event.nativeFunctionName: String get() = name.normalized
+private val Schema.Event.Parameter.nativeParameterName: String get() = name.normalized
 
 private val Schema.Event.Parameter.nativeTypeName: TypeName
     get() = when (typeName) {
@@ -135,5 +135,8 @@ private val Schema.Event.Parameter.nativeParameterExpression: String
         else -> "$nativeParameterName.$enumValuePropertyName"
     }
 
-private val String.decapitalized: String get() = decapitalize()
-private val String.normalized: String get() = replace(" ", "")
+// remove whitespace, convert snake_case to camelCase
+private val String.normalized: String
+    get() = replace(" ", "")
+        .split("_").joinToString(separator = "") { it.capitalize() }
+        .decapitalize()
