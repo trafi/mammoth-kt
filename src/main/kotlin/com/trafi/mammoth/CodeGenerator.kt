@@ -70,11 +70,11 @@ object CodeGenerator {
                     .build()
             })
             .addStatement(
-                "return %T(\nname = %S,\nparameters = %L)",
+                "return %T(\n⇥name = %S,\nparameters = %L⇤\n)",
                 rawEvent,
                 event.publishName,
                 CodeBlock.of(
-                    "mapOf(\n%L)",
+                    "mapOf(\n⇥%L⇤\n)",
                     event.publishValues.map {
                         CodeBlock.of(
                             "%S to %S",
