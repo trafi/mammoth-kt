@@ -8,7 +8,7 @@ private const val schemaVersionPropertyName = "mammothSchemaVersion"
 private const val schemaVersionPublishName = "score"
 
 object CodeGenerator {
-    private val rawEvent = ClassName(packageName, "RawEvent")
+
     private val schemaVersion = MemberName(
         packageName,
         schemaVersionPropertyName
@@ -60,9 +60,16 @@ object CodeGenerator {
     }
 
     private fun generateEventFunction(event: Schema.Event): FunSpec {
+        var screenNameFormat = "%L"
+        var screenNameParameter = ""
+        if (event.eventClass.simpleName == "RawEvent.Screen") {
+            screenNameParameter = event.publishValues.find { it.first == "content" }?.second ?: ""
+            screenNameFormat = if (screenNameParameter.isNotEmpty()) ",\nscreenName = %S" else ""
+        }
+
         return FunSpec.builder(event.nativeFunctionName)
             .addKdoc(event.description)
-            .returns(rawEvent)
+            .returns(event.eventClass)
             .addParameters(event.parameters.map {
                 ParameterSpec
                     .builder(it.nativeParameterName, it.nativeTypeName)
@@ -70,8 +77,8 @@ object CodeGenerator {
                     .build()
             })
             .addStatement(
-                "return %T(\n⇥name = %S,\nparameters = %L⇤\n)",
-                rawEvent,
+                "return %T(\n⇥name = %S,\nparameters = %L$screenNameFormat⇤\n)",
+                event.eventClass,
                 event.publishName,
                 CodeBlock.of(
                     "mapOf(\n⇥%L⇤\n)",
@@ -94,7 +101,8 @@ object CodeGenerator {
                             schemaVersion
                         )
                     ).joinToCode(separator = ",\n")
-                )
+                ),
+                screenNameParameter
             )
             .build()
     }
@@ -119,6 +127,12 @@ private val Schema.Event.publishName: String
         return eventTypeValue.stringEnumValue
             ?: throw IllegalArgumentException("${Schema.Event.eventTypeIdentifier} must have non-null value")
     }
+
+private val Schema.Event.eventClass: ClassName
+    get() = ClassName(packageName, when (publishName) {
+        "screen_open" -> "RawEvent.Screen"
+        else -> "RawEvent.Other"
+    })
 
 private val Schema.Event.publishValues: List<Pair<String, String>>
     get() = values.map { it.parameter.publishName to it.publishValue }
