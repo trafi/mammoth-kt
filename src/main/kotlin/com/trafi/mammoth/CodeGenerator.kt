@@ -8,11 +8,9 @@ private const val schemaVersionPropertyName = "mammothSchemaVersion"
 private const val schemaVersionPublishName = "score"
 
 object CodeGenerator {
+    private val analytics = ClassName(packageName, "Analytics")
     private val rawEvent = ClassName(packageName, "RawEvent")
-    private val schemaVersion = MemberName(
-        packageName,
-        schemaVersionPropertyName
-    )
+    private val schemaVersion = MemberName(packageName, schemaVersionPropertyName)
 
     fun generateCode(schema: Schema): String {
         val file = FileSpec.builder(packageName, "AnalyticsEvent")
@@ -63,12 +61,23 @@ object CodeGenerator {
         return FunSpec.builder(event.nativeFunctionName)
             .addKdoc(event.description)
             .returns(rawEvent)
-            .addParameters(event.parameters.map {
+            .addParameters(event.parameters.map { parameter ->
                 ParameterSpec
-                    .builder(it.nativeParameterName, it.nativeTypeName)
-                    .addKdoc(it.description)
+                    .builder(parameter.nativeParameterName, parameter.nativeTypeName)
+                    .addKdoc(parameter.description)
+                    .apply {
+                        when (parameter.name) {
+                            Schema.Event.Parameter.screenNameParameterName,
+                            Schema.Event.Parameter.previousScreenNameParameterName -> {
+                                defaultValue("%T.screenName", analytics)
+                            }
+                            Schema.Event.Parameter.modalNameParameterName -> {
+                                defaultValue("%T.modalName", analytics)
+                            }
+                        }
+                    }
                     .build()
-            })
+            }.sortedBy { it.defaultValue != null })
             .addStatement(
                 "return %T(\n⇥name = %S,\nparameters = %L⇤\n)",
                 rawEvent,
@@ -114,10 +123,10 @@ private val Schema.Event.Parameter.nativeTypeName: TypeName
 
 private val Schema.Event.publishName: String
     get() {
-        val eventTypeValue = values.firstOrNull { it.parameter.name == Schema.Event.eventTypeIdentifier }
-            ?: throw IllegalArgumentException("Event does not contain valid EventType value")
+        val eventTypeValue = values.firstOrNull { it.parameter.name == Schema.Event.Parameter.eventTypeParameterName }
+            ?: throw IllegalArgumentException("Event does not contain valid ${Schema.Event.Parameter.eventTypeParameterName} value")
         return eventTypeValue.stringEnumValue
-            ?: throw IllegalArgumentException("${Schema.Event.eventTypeIdentifier} must have non-null value")
+            ?: throw IllegalArgumentException("${Schema.Event.Parameter.eventTypeParameterName} must have non-null value")
     }
 
 private val Schema.Event.publishValues: List<Pair<String, String>>

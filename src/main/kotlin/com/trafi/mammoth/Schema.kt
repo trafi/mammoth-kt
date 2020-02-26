@@ -17,9 +17,6 @@ class Schema(
         val values: List<Value>,
         val parameters: List<Parameter>
     ) {
-        companion object {
-            const val eventTypeIdentifier = "event_type"
-        }
 
         @Serializable
         class Value(
@@ -36,7 +33,14 @@ class Schema(
             val typeName: String,
             val description: String,
             val publishName: String
-        )
+        ) {
+            companion object {
+                const val eventTypeParameterName = "event_type"
+                const val screenNameParameterName = "screen_name"
+                const val previousScreenNameParameterName = "previous_screen_name"
+                const val modalNameParameterName = "modal_name"
+            }
+        }
     }
 
     @Serializable
