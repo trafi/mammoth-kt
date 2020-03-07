@@ -1,5 +1,6 @@
 package com.trafi.mammoth
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -16,7 +17,8 @@ class Schema(
         val name: String,
         val description: String,
         val values: List<Value>,
-        val parameters: List<Parameter>
+        val parameters: List<Parameter>,
+        val tags: List<Tag>
     ) {
 
         @Serializable
@@ -42,6 +44,12 @@ class Schema(
                 const val modalNameParameterName = "modal_name"
             }
         }
+
+        @Serializable
+        class Tag(
+            val name: String,
+            @SerialName("class") val clazz: String
+        )
     }
 
     @Serializable

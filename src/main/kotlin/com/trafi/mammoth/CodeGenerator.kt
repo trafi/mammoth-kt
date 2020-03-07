@@ -61,6 +61,11 @@ object CodeGenerator {
     private fun generateEventFunction(event: Schema.Event): FunSpec {
         return FunSpec.builder(event.nativeFunctionName)
             .addKdoc(event.description)
+            .apply {
+                if (event.tags.isNotEmpty()) {
+                    addKdoc(event.tags.joinToString(prefix = "\n\n", separator = ", ") { "${it.clazz}:${it.name}" })
+                }
+            }
             .returns(rawEvent)
             .addParameters(event.parameters.map { parameter ->
                 ParameterSpec
