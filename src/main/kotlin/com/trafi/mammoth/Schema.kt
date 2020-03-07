@@ -12,6 +12,7 @@ class Schema(
 
     @Serializable
     class Event(
+        val id: Long,
         val name: String,
         val description: String,
         val values: List<Value>,

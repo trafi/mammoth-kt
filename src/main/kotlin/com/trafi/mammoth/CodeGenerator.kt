@@ -6,6 +6,7 @@ private const val packageName = "com.trafi.analytics"
 private const val enumValuePropertyName = "value"
 private const val schemaVersionPropertyName = "mammothSchemaVersion"
 private const val schemaVersionPublishName = "score"
+private const val eventIdPublishName = "achievement_id"
 
 object CodeGenerator {
     private val analytics = ClassName(packageName, "Analytics")
@@ -97,6 +98,12 @@ object CodeGenerator {
                             it.second
                         )
                     }).plus(
+                        CodeBlock.of(
+                            "%S to %S",
+                            eventIdPublishName,
+                            event.id
+                        )
+                    ).plus(
                         CodeBlock.of(
                             "%S to %M",
                             schemaVersionPublishName,
