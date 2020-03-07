@@ -35,7 +35,7 @@ class Mammoth : CliktCommand() {
                     response.body?.string() ?: throw IOException("${response.code} ${response.message} with empty body")
 
                 echo(if (business) "Parsing schema" else "Grooming mammoth")
-                val json = Json(JsonConfiguration.Stable)
+                val json = Json(JsonConfiguration.Stable.copy(strictMode = false))
                 val schema = json.parse(Schema.serializer(), schemaJsonString)
 
                 echo(if (business) "Generating code" else "Cooking kotlet")
