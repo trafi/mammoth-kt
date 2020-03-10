@@ -142,7 +142,9 @@ private val Schema.Event.publishName: String
     }
 
 private val Schema.Event.publishValues: List<Pair<String, String>>
-    get() = values.map { it.parameter.publishName to it.publishValue }
+    get() = values
+        .filterNot { it.parameter.name == Schema.Event.Parameter.eventTypeParameterName }
+        .map { it.parameter.publishName to it.publishValue }
 
 private val Schema.Event.Value.publishValue: String
     get() = stringValue ?: integerValue?.toString() ?: stringEnumValue ?: booleanValue?.toString()
