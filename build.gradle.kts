@@ -2,7 +2,7 @@ plugins {
     val kotlinVersion = "1.3.61"
     kotlin("jvm") version kotlinVersion
     id("org.jetbrains.kotlin.plugin.serialization") version kotlinVersion
-    id("com.github.johnrengelman.shadow") version "5.2.0"
+    id("com.github.johnrengelman.shadow") version "6.0.0"
 }
 
 group = "com.trafi"
