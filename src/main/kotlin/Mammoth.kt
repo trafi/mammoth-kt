@@ -10,6 +10,7 @@ import okhttp3.Request
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
+import java.net.SocketTimeoutException
 
 class Mammoth : CliktCommand() {
 
@@ -49,6 +50,9 @@ class Mammoth : CliktCommand() {
             }
         } catch (e: Exception) {
             echo(if (business) "Error: $e" else "Oops, something went wrong: $e")
+            if (e is SocketTimeoutException) {
+                echo("Please make sure you are connected to the Trafi VPN")
+            }
         }
     }
 }
