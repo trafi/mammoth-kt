@@ -10,6 +10,7 @@ import okhttp3.Request
 import java.io.File
 import java.io.FileWriter
 import java.io.IOException
+import java.net.SocketTimeoutException
 
 class Mammoth : CliktCommand() {
 
@@ -22,33 +23,31 @@ class Mammoth : CliktCommand() {
         try {
             val url = "https://mammoth.trafi.com/$project/schema/$version"
             echo(if (business) "Downloading schema from $url" else "Hunting for mammoths at $url")
-            OkHttpClient().newCall(
-                Request.Builder()
-                    .url(url)
-                    .build()
-            ).execute().use { response ->
-                if (response.code != 200) {
-                    throw IOException("${response.code} ${response.message}\n${response.body?.string().orEmpty()}")
+            val schemaJsonString =
+                OkHttpClient().newCall(Request.Builder().url(url).build()).execute().use { response ->
+                    if (response.code != 200) {
+                        throw IOException("${response.code} ${response.message}\n${response.body?.string().orEmpty()}")
+                    }
+                    response.body?.string() ?: throw IOException("${response.code} ${response.message} with empty body")
                 }
 
-                val schemaJsonString =
-                    response.body?.string() ?: throw IOException("${response.code} ${response.message} with empty body")
+            echo(if (business) "Parsing schema" else "Grooming mammoth")
+            val json = Json(JsonConfiguration.Stable.copy(ignoreUnknownKeys = true))
+            val schema = json.parse(Schema.serializer(), schemaJsonString)
 
-                echo(if (business) "Parsing schema" else "Grooming mammoth")
-                val json = Json(JsonConfiguration.Stable.copy(strictMode = false))
-                val schema = json.parse(Schema.serializer(), schemaJsonString)
+            echo(if (business) "Generating code" else "Cooking kotlet")
+            val code = CodeGenerator.generateCode(schema)
 
-                echo(if (business) "Generating code" else "Cooking kotlet")
-                val code = CodeGenerator.generateCode(schema)
+            val file = File(outputPath).resolve(outputFilename)
+            echo(if (business) "Writing generated code to $file" else "Serving hot kotlet at $file")
+            FileWriter(file).use { it.write(code) }
 
-                val file = File(outputPath).resolve(outputFilename)
-                echo(if (business) "Writing generated code to $file" else "Serving hot kotlet at $file")
-                FileWriter(file).use { it.write(code) }
-
-                echo(if (business) "Success" else "Victory")
-            }
+            echo(if (business) "Success" else "Victory")
         } catch (e: Exception) {
             echo(if (business) "Error: $e" else "Oops, something went wrong: $e")
+            if (e is SocketTimeoutException) {
+                echo("Please make sure you are connected to the Trafi VPN")
+            }
         }
     }
 }
