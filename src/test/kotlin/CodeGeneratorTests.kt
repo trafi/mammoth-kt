@@ -1,13 +1,13 @@
 import com.trafi.mammoth.CodeGenerator
 import com.trafi.mammoth.Schema
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 internal class CodeGeneratorTests {
 
-    private val json = Json(JsonConfiguration.Stable)
+    private val json = Json {}
 
     @Test
     fun `generates function with no parameters`() {
@@ -17,6 +17,7 @@ internal class CodeGeneratorTests {
               "versionNumber": 1,
               "events": [
                 {
+                  "id": 0,
                   "name": "SomeScreenOpen",
                   "description": "Some screen was opened",
                   "values": [
@@ -33,7 +34,8 @@ internal class CodeGeneratorTests {
                       "stringEnumValue": "screen_open"
                     }
                   ],
-                  "parameters": []
+                  "parameters": [],
+                  "tags": []
                 }
               ],
               "types": [
@@ -47,7 +49,7 @@ internal class CodeGeneratorTests {
               ]
             }
         """.trimIndent()
-        val schema = json.parse(Schema.serializer(), schemaJsonString)
+        val schema = json.decodeFromString<Schema>(schemaJsonString)
 
         val code = CodeGenerator.generateCode(schema)
         assertEquals(
@@ -61,25 +63,35 @@ internal class CodeGeneratorTests {
 
             private const val mammothSchemaVersion: String = "1"
 
-            object AnalyticsEvent {
+            public object AnalyticsEvent {
                 /**
                  * Some screen was opened
                  */
-                fun someScreenOpen(): RawEvent = RawEvent(
-                    name = "screen_open",
-                    parameters = mapOf(
-                        "event_type" to "screen_open",
-                        "score" to mammothSchemaVersion
+                public fun someScreenOpen(): Analytics.Event = Analytics.Event(
+                    business = RawEvent(
+                        name = "SomeScreenOpen",
+                        parameters = mapOf(
+                            "event_type" to "screen_open",
+                            "schema_event_id" to "0",
+                            "schema_version" to mammothSchemaVersion
+                        )
+                    ),
+                    publish = RawEvent(
+                        name = "screen_open",
+                        parameters = mapOf(
+                            "achievement_id" to "0",
+                            "score" to mammothSchemaVersion
+                        )
                     )
                 )
             }
 
-            enum class EventType(
-                val value: String
+            public enum class EventType(
+                public val value: String
             ) {
                 SCREEN_OPEN("screen_open"),
-
-                ELEMENT_TAP("element_tap");
+                ELEMENT_TAP("element_tap"),
+                ;
             }
             
             """.trimIndent(), code
