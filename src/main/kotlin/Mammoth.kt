@@ -3,8 +3,8 @@ import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.trafi.mammoth.CodeGenerator
 import com.trafi.mammoth.Schema
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -32,8 +32,10 @@ class Mammoth : CliktCommand() {
                 }
 
             echo(if (business) "Parsing schema" else "Grooming mammoth")
-            val json = Json(JsonConfiguration.Stable.copy(ignoreUnknownKeys = true))
-            val schema = json.parse(Schema.serializer(), schemaJsonString)
+            val json = Json {
+                ignoreUnknownKeys = true
+            }
+            val schema = json.decodeFromString<Schema>(schemaJsonString)
 
             echo(if (business) "Generating code" else "Cooking kotlet")
             val code = CodeGenerator.generateCode(schema)
