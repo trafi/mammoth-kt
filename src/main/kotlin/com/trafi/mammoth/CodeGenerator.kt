@@ -33,12 +33,13 @@ object CodeGenerator {
             .addComment("%L schema version %L\n", schema.projectId, schema.versionNumber)
             .addComment("Generated with https://github.com/trafi/mammoth-kt\nDo not edit manually.")
             .addProperty(
-                PropertySpec.builder(
-                    schemaVersionPropertyName,
-                    String::class,
-                    KModifier.PRIVATE,
-                    KModifier.CONST
-                )
+                PropertySpec
+                    .builder(
+                        schemaVersionPropertyName,
+                        String::class,
+                        KModifier.PRIVATE,
+                        KModifier.CONST
+                    )
                     .initializer("%S", schema.versionNumber)
                     .build()
             )
@@ -109,14 +110,13 @@ object CodeGenerator {
     }
 
     private fun generateSdkTags(event: Schema.Event): CodeBlock? {
+        val sdkTags = event.tags.filter {
+            it.clazz.contains(other = "Sdk", ignoreCase = true)
+        }
         return CodeBlock.of(
             "listOf(\n⇥%L⇤\n)",
-            event.tags
-                .filter {
-                    it.clazz.contains(other = "Sdk", ignoreCase = true)
-                }
-                .joinToString(separator = ",\n") { "\"${it.name}\"" }
-        ).takeIf { event.tags.isNotEmpty() }
+            sdkTags.joinToString(separator = ",\n") { "\"${it.name}\"" }
+        ).takeIf { sdkTags.isNotEmpty() }
     }
 
     private fun generatePublishEvent(event: Schema.Event): CodeBlock {
@@ -248,4 +248,3 @@ private val Schema.Event.Parameter.nativeParameterExpression: String
 private val String.normalized: String
     get() = replace(" ", "")
         .split("_").joinToString(separator = "") { it.capitalize() }
-
