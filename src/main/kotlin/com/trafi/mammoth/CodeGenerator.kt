@@ -1,6 +1,17 @@
 package com.trafi.mammoth
 
-import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.KModifier
+import com.squareup.kotlinpoet.MemberName
+import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.PropertySpec
+import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.TypeSpec
+import com.squareup.kotlinpoet.asTypeName
+import com.squareup.kotlinpoet.joinToCode
 
 private const val packageName = "com.trafi.analytics"
 private const val enumValuePropertyName = "value"
@@ -22,7 +33,12 @@ object CodeGenerator {
             .addComment("%L schema version %L\n", schema.projectId, schema.versionNumber)
             .addComment("Generated with https://github.com/trafi/mammoth-kt\nDo not edit manually.")
             .addProperty(
-                PropertySpec.builder(schemaVersionPropertyName, String::class, KModifier.PRIVATE, KModifier.CONST)
+                PropertySpec.builder(
+                    schemaVersionPropertyName,
+                    String::class,
+                    KModifier.PRIVATE,
+                    KModifier.CONST
+                )
                     .initializer("%S", schema.versionNumber)
                     .build()
             )
@@ -83,12 +99,24 @@ object CodeGenerator {
                     .build()
             }.sortedBy { it.defaultValue != null })
             .addStatement(
-                "return %T(\n⇥business = %L,\npublish = %L⇤\n)",
+                "return %T(\n⇥business = %L,\npublish = %L,\nexplicitConsumerTags = %L⇤\n)",
                 eventClass,
                 generateBusinessEvent(event),
-                generatePublishEvent(event)
+                generatePublishEvent(event),
+                generateSdkTags(event) ?: "null"
             )
             .build()
+    }
+
+    private fun generateSdkTags(event: Schema.Event): CodeBlock? {
+        return CodeBlock.of(
+            "listOf(\n⇥%L⇤\n)",
+            event.tags
+                .filter {
+                    it.clazz.contains(other = "Sdk", ignoreCase = true)
+                }
+                .joinToString(separator = ",\n") { "\"${it.name}\"" }
+        ).takeIf { event.tags.isNotEmpty() }
     }
 
     private fun generatePublishEvent(event: Schema.Event): CodeBlock {
@@ -130,7 +158,8 @@ object CodeGenerator {
     }
 
     private fun generateRawEvent(name: String, parameterCodeBlocks: List<CodeBlock>): CodeBlock {
-        return CodeBlock.of("%T(\n⇥name = %S,\nparameters = %L⇤\n)",
+        return CodeBlock.of(
+            "%T(\n⇥name = %S,\nparameters = %L⇤\n)",
             rawEventClass,
             name,
             CodeBlock.of(
@@ -140,31 +169,33 @@ object CodeGenerator {
         )
     }
 
-    private val Schema.Event.publishMetadataParameters: List<CodeBlock> get() = listOf(
-        CodeBlock.of(
-            "%S to %S",
-            eventIdPublishName,
-            id
-        ),
-        CodeBlock.of(
-            "%S to %M",
-            schemaVersionPublishName,
-            schemaVersion
+    private val Schema.Event.publishMetadataParameters: List<CodeBlock>
+        get() = listOf(
+            CodeBlock.of(
+                "%S to %S",
+                eventIdPublishName,
+                id
+            ),
+            CodeBlock.of(
+                "%S to %M",
+                schemaVersionPublishName,
+                schemaVersion
+            )
         )
-    )
 
-    private val Schema.Event.businessMetadataParameters: List<CodeBlock> get() = listOf(
-        CodeBlock.of(
-            "%S to %S",
-            eventIdBusinessName,
-            id
-        ),
-        CodeBlock.of(
-            "%S to %M",
-            schemaVersionBusinessName,
-            schemaVersion
+    private val Schema.Event.businessMetadataParameters: List<CodeBlock>
+        get() = listOf(
+            CodeBlock.of(
+                "%S to %S",
+                eventIdBusinessName,
+                id
+            ),
+            CodeBlock.of(
+                "%S to %M",
+                schemaVersionBusinessName,
+                schemaVersion
+            )
         )
-    )
 }
 
 private val Schema.Event.nativeFunctionName: String get() = name.normalized.decapitalize()
@@ -181,8 +212,9 @@ private val Schema.Event.Parameter.nativeTypeName: TypeName
 
 private val Schema.Event.publishName: String
     get() {
-        val eventTypeValue = values.firstOrNull { it.parameter.name == Schema.Event.Parameter.eventTypeParameterName }
-            ?: throw IllegalArgumentException("Event does not contain valid ${Schema.Event.Parameter.eventTypeParameterName} value")
+        val eventTypeValue =
+            values.firstOrNull { it.parameter.name == Schema.Event.Parameter.eventTypeParameterName }
+                ?: throw IllegalArgumentException("Event does not contain valid ${Schema.Event.Parameter.eventTypeParameterName} value")
         return eventTypeValue.stringEnumValue
             ?: throw IllegalArgumentException("${Schema.Event.Parameter.eventTypeParameterName} must have non-null value")
     }
@@ -216,3 +248,4 @@ private val Schema.Event.Parameter.nativeParameterExpression: String
 private val String.normalized: String
     get() = replace(" ", "")
         .split("_").joinToString(separator = "") { it.capitalize() }
+
