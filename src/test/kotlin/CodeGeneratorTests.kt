@@ -50,7 +50,7 @@ internal class CodeGeneratorTests {
         """.trimIndent()
         val schema = json.decodeFromString<Schema>(schemaJsonString)
 
-        val code = CodeGenerator.generateCode(schema)
+        val code = CodeGenerator.generateCode(schema, className = "AnalyticsEvent")
         assertEquals(
             """
             // whitelabel schema version 1
@@ -149,7 +149,7 @@ internal class CodeGeneratorTests {
         """.trimIndent()
         val schema = json.decodeFromString<Schema>(schemaJsonString)
 
-        val code = CodeGenerator.generateCode(schema)
+        val code = CodeGenerator.generateCode(schema, className = "AnalyticsEvent")
         assertEquals(
             """
             // whitelabel schema version 1

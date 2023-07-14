@@ -17,6 +17,7 @@ class Mammoth : CliktCommand() {
     private val version: String by option(help = "Mammoth schema version").default("")
     private val outputPath: String by option(help = "Generated schema code output path").default("")
     private val outputFilename: String by option(help = "Generated schema code output file name").default("MammothEvents.kt")
+    private val outputClassName: String by option(help = "Generated schema code output class name").default("AnalyticsEvent")
 
     override fun run() {
         try {
@@ -37,7 +38,7 @@ class Mammoth : CliktCommand() {
             val schema = json.decodeFromString<Schema>(schemaJsonString)
 
             echo(if (business) "Generating code" else "Cooking kotlet")
-            val code = CodeGenerator.generateCode(schema)
+            val code = CodeGenerator.generateCode(schema, outputClassName)
 
             val file = File(outputPath).resolve(outputFilename)
             echo(if (business) "Writing generated code to $file" else "Serving hot kotlet at $file")

@@ -29,8 +29,8 @@ object CodeGenerator {
     private val rawEventClass = ClassName(packageName, "RawEvent")
     private val schemaVersion = MemberName(packageName, schemaVersionPropertyName)
 
-    fun generateCode(schema: Schema): String {
-        val file = FileSpec.builder(packageName, "AnalyticsEvent")
+    fun generateCode(schema: Schema, className: String): String {
+        val file = FileSpec.builder(packageName, className)
             .indent("    ")
             .addFileComment("%L schema version %L\n", schema.projectId, schema.versionNumber)
             .addFileComment("Generated with https://github.com/trafi/mammoth-kt\nDo not edit manually.")
@@ -46,7 +46,7 @@ object CodeGenerator {
                     .build()
             )
             .addType(
-                TypeSpec.objectBuilder("AnalyticsEvent")
+                TypeSpec.objectBuilder(className)
                     .apply { schema.events.forEach { addFunction(generateEventFunction(it)) } }
                     .build()
             )
