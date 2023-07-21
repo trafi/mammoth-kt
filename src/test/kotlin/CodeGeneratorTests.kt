@@ -1,13 +1,12 @@
 import com.trafi.mammoth.CodeGenerator
 import com.trafi.mammoth.Schema
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 internal class CodeGeneratorTests {
 
-    private val json = Json {}
+    private val json = Json
 
     @Test
     fun `generates function with no parameters`() {
@@ -88,7 +87,7 @@ internal class CodeGeneratorTests {
             }
 
             public enum class EventType(
-                public val value: String
+                public val `value`: String,
             ) {
                 SCREEN_OPEN("screen_open"),
                 ELEMENT_TAP("element_tap"),
@@ -190,7 +189,7 @@ internal class CodeGeneratorTests {
             }
 
             public enum class EventType(
-                public val value: String
+                public val `value`: String,
             ) {
                 SCREEN_OPEN("screen_open"),
                 ELEMENT_TAP("element_tap"),
