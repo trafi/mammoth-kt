@@ -105,7 +105,7 @@ object CodeGenerator {
                 "return %T(\n⇥business = %L,\npublish = %L,\nexplicitConsumerTags = %L⇤\n)",
                 eventClass,
                 generateBusinessEvent(event),
-                generatePublishEvent(event),
+                generatePublishEvent(event) ?: "null",
                 generateSdkTags(event) ?: "null"
             )
             .build()
@@ -121,9 +121,10 @@ object CodeGenerator {
         ).takeIf { sdkTags.isNotEmpty() }
     }
 
-    private fun generatePublishEvent(event: Schema.Event): CodeBlock {
+    private fun generatePublishEvent(event: Schema.Event): CodeBlock? {
+        val publishName = event.publishName ?: return null
         return generateRawEvent(
-            name = event.publishName,
+            name = publishName,
             parameterCodeBlocks = event.publishValues.map {
                 CodeBlock.of(
                     "%S to %S",
@@ -212,11 +213,11 @@ private val Schema.Event.Parameter.nativeTypeName: TypeName
         else -> ClassName(packageName, typeName.normalized)
     }
 
-private val Schema.Event.publishName: String
+private val Schema.Event.publishName: String?
     get() {
         val eventTypeValue =
             values.firstOrNull { it.parameter.name == Schema.Event.Parameter.eventTypeParameterName }
-                ?: throw IllegalArgumentException("Event does not contain valid ${Schema.Event.Parameter.eventTypeParameterName} value")
+                ?: return null
         return eventTypeValue.stringEnumValue
             ?: throw IllegalArgumentException("${Schema.Event.Parameter.eventTypeParameterName} must have non-null value")
     }

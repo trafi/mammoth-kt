@@ -199,4 +199,58 @@ internal class CodeGeneratorTests {
             """.trimIndent(), code
         )
     }
+
+    @Test
+    fun `generates function for bare-bones schema`() {
+        val schemaJsonString = """
+            {
+              "projectId": "some-project",
+              "versionNumber": 1,
+              "events": [
+                {
+                  "id": 0,
+                  "name": "SomeScreenOpen",
+                  "description": "Some screen was opened",
+                  "values": [],
+                  "parameters": [],
+                  "tags": []
+                }
+              ],
+              "types": []
+            }
+        """.trimIndent()
+        val schema = json.decodeFromString<Schema>(schemaJsonString)
+
+        val code = CodeGenerator.generateCode(schema, className = "AnalyticsEvent")
+        assertEquals(
+            """
+            // some-project schema version 1
+            // Generated with https://github.com/trafi/mammoth-kt
+            // Do not edit manually.
+            package com.trafi.analytics
+
+            import kotlin.String
+
+            private const val mammothSchemaVersion: String = "1"
+
+            public object AnalyticsEvent {
+                /**
+                 * Some screen was opened
+                 */
+                public fun someScreenOpen(): Analytics.Event = Analytics.Event(
+                    business = RawEvent(
+                        name = "SomeScreenOpen",
+                        parameters = mapOf(
+                            "schema_event_id" to "0",
+                            "schema_version" to mammothSchemaVersion
+                        )
+                    ),
+                    publish = null,
+                    explicitConsumerTags = null
+                )
+            }
+            
+            """.trimIndent(), code
+        )
+    }
 }
