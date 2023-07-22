@@ -29,25 +29,33 @@ object CodeGenerator {
     private val rawEventClass = ClassName(packageName, "RawEvent")
     private val schemaVersion = MemberName(packageName, schemaVersionPropertyName)
 
-    fun generateCode(schema: Schema, className: String): String {
+    fun generateCode(schema: Schema, className: String, includeSchemaMetadata: Boolean): String {
         val file = FileSpec.builder(packageName, className)
             .indent("    ")
             .addFileComment("%L schema version %L\n", schema.projectId, schema.versionNumber)
             .addFileComment("Generated with https://github.com/trafi/mammoth-kt\nDo not edit manually.")
-            .addProperty(
-                PropertySpec
-                    .builder(
-                        schemaVersionPropertyName,
-                        String::class,
-                        KModifier.PRIVATE,
-                        KModifier.CONST
+            .apply {
+                if (includeSchemaMetadata) {
+                    addProperty(
+                        PropertySpec
+                            .builder(
+                                schemaVersionPropertyName,
+                                String::class,
+                                KModifier.PRIVATE,
+                                KModifier.CONST
+                            )
+                            .initializer("%S", schema.versionNumber)
+                            .build()
                     )
-                    .initializer("%S", schema.versionNumber)
-                    .build()
-            )
+                }
+            }
             .addType(
                 TypeSpec.objectBuilder(className)
-                    .apply { schema.events.forEach { addFunction(generateEventFunction(it)) } }
+                    .apply {
+                        schema.events.forEach {
+                            addFunction(generateEventFunction(it, includeSchemaMetadata))
+                        }
+                    }
                     .build()
             )
             .apply { schema.types.forEach { generateType(it)?.let { typeSpec -> addType(typeSpec) } } }
@@ -80,7 +88,10 @@ object CodeGenerator {
         }
     }
 
-    private fun generateEventFunction(event: Schema.Event): FunSpec {
+    private fun generateEventFunction(
+        event: Schema.Event,
+        includeSchemaMetadata: Boolean,
+    ): FunSpec {
         return FunSpec.builder(event.nativeFunctionName)
             .addKdoc(event.description)
             .returns(eventClass)
@@ -104,8 +115,8 @@ object CodeGenerator {
             .addStatement(
                 "return %T(\n⇥business = %L,\npublish = %L,\nexplicitConsumerTags = %L⇤\n)",
                 eventClass,
-                generateBusinessEvent(event),
-                generatePublishEvent(event) ?: "null",
+                generateBusinessEvent(event, includeSchemaMetadata),
+                generatePublishEvent(event, includeSchemaMetadata) ?: "null",
                 generateSdkTags(event) ?: "null"
             )
             .build()
@@ -121,7 +132,10 @@ object CodeGenerator {
         ).takeIf { sdkTags.isNotEmpty() }
     }
 
-    private fun generatePublishEvent(event: Schema.Event): CodeBlock? {
+    private fun generatePublishEvent(
+        event: Schema.Event,
+        includeSchemaMetadata: Boolean,
+    ): CodeBlock? {
         val publishName = event.publishName ?: return null
         return generateRawEvent(
             name = publishName,
@@ -137,11 +151,14 @@ object CodeGenerator {
                     it.first,
                     it.second
                 )
-            }).plus(event.publishMetadataParameters)
+            }).let { if (includeSchemaMetadata) it.plus(event.publishMetadataParameters) else it }
         )
     }
 
-    private fun generateBusinessEvent(event: Schema.Event): CodeBlock {
+    private fun generateBusinessEvent(
+        event: Schema.Event,
+        includeSchemaMetadata: Boolean,
+    ): CodeBlock {
         return generateRawEvent(
             name = event.name,
             parameterCodeBlocks = event.businessValues.map {
@@ -156,7 +173,7 @@ object CodeGenerator {
                     it.first,
                     it.second
                 )
-            }).plus(event.businessMetadataParameters)
+            }).let { if (includeSchemaMetadata) it.plus(event.businessMetadataParameters) else it }
         )
     }
 
@@ -165,10 +182,14 @@ object CodeGenerator {
             "%T(\n⇥name = %S,\nparameters = %L⇤\n)",
             rawEventClass,
             name,
-            CodeBlock.of(
-                "mapOf(\n⇥%L⇤\n)",
-                parameterCodeBlocks.joinToCode(separator = ",\n")
-            )
+            if (parameterCodeBlocks.isEmpty()) {
+                CodeBlock.of("mapOf()")
+            } else {
+                CodeBlock.of(
+                    "mapOf(\n⇥%L⇤\n)",
+                    parameterCodeBlocks.joinToCode(separator = ",\n")
+                )
+            }
         )
     }
 
