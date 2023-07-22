@@ -99,7 +99,7 @@ internal class CodeGeneratorTests {
     }
 
     @Test
-    fun `generates function with no parameters but with explicitConsumerTags`() {
+    fun `generates event with explicitConsumerTags`() {
         val schemaJsonString = """
             {
               "projectId": "whitelabel",
