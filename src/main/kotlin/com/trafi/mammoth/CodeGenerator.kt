@@ -113,7 +113,7 @@ object CodeGenerator {
                     .build()
             }.sortedBy { it.defaultValue != null })
             .addStatement(
-                "return %T(\n⇥business = %L,\npublish = %L,\nexplicitConsumerTags = %L⇤\n)",
+                "return %T(\n⇥business = %L,\npublish = %L,\nexplicitConsumerTags = %L,⇤\n)",
                 eventClass,
                 generateBusinessEvent(event, includeSchemaMetadata),
                 generatePublishEvent(event, includeSchemaMetadata) ?: "null",
@@ -128,7 +128,7 @@ object CodeGenerator {
         }
         return CodeBlock.of(
             "listOf(\n⇥%L⇤\n)",
-            sdkTags.joinToString(separator = ",\n") { "\"${it.name}\"" }
+            sdkTags.joinToString(separator = ",\n", postfix = ",") { "\"${it.name}\"" }
         ).takeIf { sdkTags.isNotEmpty() }
     }
 
@@ -179,7 +179,7 @@ object CodeGenerator {
 
     private fun generateRawEvent(name: String, parameterCodeBlocks: List<CodeBlock>): CodeBlock {
         return CodeBlock.of(
-            "%T(\n⇥name = %S,\nparameters = %L⇤\n)",
+            "%T(\n⇥name = %S,\nparameters = %L,⇤\n)",
             rawEventClass,
             name,
             if (parameterCodeBlocks.isEmpty()) {
@@ -187,7 +187,7 @@ object CodeGenerator {
             } else {
                 CodeBlock.of(
                     "mapOf(\n⇥%L⇤\n)",
-                    parameterCodeBlocks.joinToCode(separator = ",\n")
+                    parameterCodeBlocks.joinToCode(separator = ",\n", suffix = ",")
                 )
             }
         )
