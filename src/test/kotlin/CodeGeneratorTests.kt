@@ -50,7 +50,11 @@ internal class CodeGeneratorTests {
         """.trimIndent()
         val schema = json.decodeFromString<Schema>(schemaJsonString)
 
-        val code = CodeGenerator.generateCode(schema)
+        val code = CodeGenerator.generateCode(
+            schema,
+            className = "AnalyticsEvent",
+            includeSchemaMetadata = true,
+        )
         assertEquals(
             """
             // whitelabel schema version 1
@@ -72,17 +76,17 @@ internal class CodeGeneratorTests {
                         parameters = mapOf(
                             "event_type" to "screen_open",
                             "schema_event_id" to "0",
-                            "schema_version" to mammothSchemaVersion
-                        )
+                            "schema_version" to mammothSchemaVersion,
+                        ),
                     ),
                     publish = RawEvent(
                         name = "screen_open",
                         parameters = mapOf(
                             "achievement_id" to "0",
-                            "score" to mammothSchemaVersion
-                        )
+                            "score" to mammothSchemaVersion,
+                        ),
                     ),
-                    explicitConsumerTags = null
+                    explicitConsumerTags = null,
                 )
             }
 
@@ -99,7 +103,7 @@ internal class CodeGeneratorTests {
     }
 
     @Test
-    fun `generates function with no parameters but with explicitConsumerTags`() {
+    fun `generates event with explicitConsumerTags`() {
         val schemaJsonString = """
             {
               "projectId": "whitelabel",
@@ -149,7 +153,11 @@ internal class CodeGeneratorTests {
         """.trimIndent()
         val schema = json.decodeFromString<Schema>(schemaJsonString)
 
-        val code = CodeGenerator.generateCode(schema)
+        val code = CodeGenerator.generateCode(
+            schema,
+            className = "AnalyticsEvent",
+            includeSchemaMetadata = true,
+        )
         assertEquals(
             """
             // whitelabel schema version 1
@@ -171,20 +179,20 @@ internal class CodeGeneratorTests {
                         parameters = mapOf(
                             "event_type" to "screen_open",
                             "schema_event_id" to "0",
-                            "schema_version" to mammothSchemaVersion
-                        )
+                            "schema_version" to mammothSchemaVersion,
+                        ),
                     ),
                     publish = RawEvent(
                         name = "screen_open",
                         parameters = mapOf(
                             "achievement_id" to "0",
-                            "score" to mammothSchemaVersion
-                        )
+                            "score" to mammothSchemaVersion,
+                        ),
                     ),
                     explicitConsumerTags = listOf(
                         "Braze",
-                        "Batch"
-                    )
+                        "Batch",
+                    ),
                 )
             }
 
@@ -194,6 +202,57 @@ internal class CodeGeneratorTests {
                 SCREEN_OPEN("screen_open"),
                 ELEMENT_TAP("element_tap"),
                 ;
+            }
+            
+            """.trimIndent(), code
+        )
+    }
+
+    @Test
+    fun `generates function for bare-bones schema`() {
+        val schemaJsonString = """
+            {
+              "projectId": "some-project",
+              "versionNumber": 1,
+              "events": [
+                {
+                  "id": 0,
+                  "name": "SomeScreenOpen",
+                  "description": "Some screen was opened",
+                  "values": [],
+                  "parameters": [],
+                  "tags": []
+                }
+              ],
+              "types": []
+            }
+        """.trimIndent()
+        val schema = json.decodeFromString<Schema>(schemaJsonString)
+
+        val code = CodeGenerator.generateCode(
+            schema,
+            className = "AnalyticsEvent",
+            includeSchemaMetadata = false,
+        )
+        assertEquals(
+            """
+            // some-project schema version 1
+            // Generated with https://github.com/trafi/mammoth-kt
+            // Do not edit manually.
+            package com.trafi.analytics
+
+            public object AnalyticsEvent {
+                /**
+                 * Some screen was opened
+                 */
+                public fun someScreenOpen(): Analytics.Event = Analytics.Event(
+                    business = RawEvent(
+                        name = "SomeScreenOpen",
+                        parameters = mapOf(),
+                    ),
+                    publish = null,
+                    explicitConsumerTags = null,
+                )
             }
             
             """.trimIndent(), code
