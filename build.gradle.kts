@@ -1,35 +1,29 @@
 plugins {
-    val kotlinVersion = "1.4.20"
-    kotlin("jvm") version kotlinVersion
-    kotlin("plugin.serialization") version kotlinVersion
-    id("com.github.johnrengelman.shadow") version "6.1.0"
+    alias(libs.plugins.kotlin)
+    alias(libs.plugins.serialization)
+    alias(libs.plugins.shadow)
 }
 
 group = "com.trafi"
 version = "2.1"
 
-repositories {
-    mavenCentral()
-    jcenter()
-}
-
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.1")
-    implementation("com.squareup:kotlinpoet:1.7.2")
-    implementation("com.github.ajalt.clikt:clikt:3.0.1")
-    implementation("com.squareup.okhttp3:okhttp:4.9.0")
+    implementation(libs.kotlin.stdlib)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinpoet)
+    implementation(libs.clikt)
+    implementation(libs.okhttp)
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.0")
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
 }
 
 tasks {
     compileKotlin {
-        kotlinOptions.jvmTarget = "1.8"
+        kotlinOptions.jvmTarget = "17"
     }
     compileTestKotlin {
-        kotlinOptions.jvmTarget = "1.8"
+        kotlinOptions.jvmTarget = "17"
     }
     test {
         useJUnitPlatform()

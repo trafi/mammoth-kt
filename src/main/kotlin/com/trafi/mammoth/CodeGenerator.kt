@@ -12,6 +12,7 @@ import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.asTypeName
 import com.squareup.kotlinpoet.joinToCode
+import java.util.Locale
 
 private const val packageName = "com.trafi.analytics"
 private const val enumValuePropertyName = "value"
@@ -20,6 +21,7 @@ private const val schemaVersionPublishName = "score"
 private const val schemaVersionBusinessName = "schema_version"
 private const val eventIdPublishName = "achievement_id"
 private const val eventIdBusinessName = "schema_event_id"
+private val locale = Locale.US
 
 object CodeGenerator {
     private val analyticsObject = ClassName(packageName, "Analytics")
@@ -30,8 +32,8 @@ object CodeGenerator {
     fun generateCode(schema: Schema): String {
         val file = FileSpec.builder(packageName, "AnalyticsEvent")
             .indent("    ")
-            .addComment("%L schema version %L\n", schema.projectId, schema.versionNumber)
-            .addComment("Generated with https://github.com/trafi/mammoth-kt\nDo not edit manually.")
+            .addFileComment("%L schema version %L\n", schema.projectId, schema.versionNumber)
+            .addFileComment("Generated with https://github.com/trafi/mammoth-kt\nDo not edit manually.")
             .addProperty(
                 PropertySpec
                     .builder(
@@ -68,7 +70,7 @@ object CodeGenerator {
                 .apply {
                     stringEnum.forEach { publishName ->
                         addEnumConstant(
-                            publishName.toUpperCase(),
+                            publishName.uppercase(locale),
                             TypeSpec.anonymousClassBuilder()
                                 .addSuperclassConstructorParameter("%S", publishName).build()
                         )
@@ -248,3 +250,8 @@ private val Schema.Event.Parameter.nativeParameterExpression: String
 private val String.normalized: String
     get() = replace(" ", "")
         .split("_").joinToString(separator = "") { it.capitalize() }
+
+private fun String.capitalize(): String =
+    replaceFirstChar { c -> if (c.isLowerCase()) c.titlecase(locale) else c.toString() }
+
+private fun String.decapitalize(): String = replaceFirstChar { it.lowercase(locale) }
