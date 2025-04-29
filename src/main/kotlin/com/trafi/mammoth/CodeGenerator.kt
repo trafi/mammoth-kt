@@ -240,6 +240,9 @@ private val Schema.Event.publishName: String?
             values.firstOrNull { it.parameter.name == Schema.Event.Parameter.eventTypeParameterName }
                 ?: return null
         return eventTypeValue.stringEnumValue
+            ?: eventTypeValue.stringValue
+            ?: eventTypeValue.integerValue?.toString()
+            ?: eventTypeValue.booleanValue?.toString()
             ?: throw IllegalArgumentException("${Schema.Event.Parameter.eventTypeParameterName} must have non-null value")
     }
 
